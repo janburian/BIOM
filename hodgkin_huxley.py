@@ -10,9 +10,9 @@ g_Na = 120  # sodium conductance (mS/cm^2)
 g_K = 36  # potassium conductance (mS/cm^2)
 g_L = 0.3  # leak conductance (mS/cm^2)
 
-E_Na = 55  # sodium reversal potential (mV)
-E_K = -72  # potassium reversal potential (mV)
-E_L = -49.387  # leak reversal potential (mV)
+E_Na = -115  # sodium reversal potential (mV)
+E_K = 12  # potassium reversal potential (mV)
+E_L = -10.613  # leak reversal potential (mV)
 
 # Function representing the Hodgkin-Huxley model
 def hodgkin_huxley(y, t):
@@ -39,14 +39,14 @@ def hodgkin_huxley(y, t):
 # External current injection functions
 # Square wave
 def I_ext_square_wave(t):
-    if np.logical_and(2 < t, t < 10):
-        return 20
-    if np.logical_and(35 < t, t < 40):
-        return 4
-    if np.logical_and(58 < t, t < 63):
-        return 15
-    if np.logical_and(78 < t, t < 90):
-        return 15
+    if np.logical_and(2 < t, t < 2.9):
+        return 100
+    if np.logical_and(58 < t, t < 58.9):
+        return 100
+    # if np.logical_and(58 < t, t < 63):
+    #     return 15
+    # if np.logical_and(78 < t, t < 90):
+    #     return 15
 
     else:
         return 0
@@ -57,47 +57,47 @@ def I_ext_square_wave(t):
 
 
 # Alpha and beta functions for n, m and h gates
-def alpha_n(V):
-    return 0.01 * (V + 55.0) / (1.0 - np.exp(-(V + 55.0) / 10.0))
-
-def beta_n(V):
-    return 0.125 * np.exp(-(V + 65.0) / 80.0)
-
-def alpha_m(V):
-    return 0.1 * (V + 40.0) / (1.0 - np.exp(-(V + 40.0) / 10.0))
-
-def beta_m(V):
-    return 4.0 * np.exp(-(V + 65.0) / 18.0)
-
-def alpha_h(V):
-    return 0.07 * np.exp(-(V + 65.0) / 20.0)
-
-def beta_h(V):
-    return 1.0 / (1.0 + np.exp(-(V + 35.0) / 10.0))
-
-
 # def alpha_n(V):
-#     return 0.01 * (V + 10.0) / (-1.0 - np.exp(V + 10.0) / 10.0)
+#     return 0.01 * (V + 55.0) / (1.0 - np.exp(-(V + 55.0) / 10.0))
 #
 # def beta_n(V):
-#     return 0.125 * np.exp(V / 80.0)
+#     return 0.125 * np.exp(-(V + 65.0) / 80.0)
 #
 # def alpha_m(V):
-#     return 0.1 * (V + 25.0) / (-1.0 - np.exp(V + 25.0) / 10.0)
+#     return 0.1 * (V + 40.0) / (1.0 - np.exp(-(V + 40.0) / 10.0))
 #
 # def beta_m(V):
-#     return 4.0 * np.exp(V / 18.0)
+#     return 4.0 * np.exp(-(V + 65.0) / 18.0)
 #
 # def alpha_h(V):
-#     return 0.07 * np.exp(V / 20.0)
+#     return 0.07 * np.exp(-(V + 65.0) / 20.0)
 #
 # def beta_h(V):
-#     return 1.0 / (1.0 + np.exp(V + 30.0) / 10.0)
+#     return 1.0 / (1.0 + np.exp(-(V + 35.0) / 10.0))
+
+
+def alpha_n(V):
+    return 0.01 * (V + 10.0) / (-1.0 + (np.exp(V + 10.0) / 10.0))
+
+def beta_n(V):
+    return 0.125 * np.exp(V / 80.0)
+
+def alpha_m(V):
+    return 0.1 * (V + 25.0) / (-1.0 + (np.exp(V + 25.0) / 10.0))
+
+def beta_m(V):
+    return 4.0 * np.exp(V / 18.0)
+
+def alpha_h(V):
+    return 0.07 * np.exp(V / 20.0)
+
+def beta_h(V):
+    return 1.0 / (1.0 + (np.exp(V + 30.0) / 10.0))
 
 
 if __name__ == "__main__":
     # Determine the initial conditions
-    resting_potential = -65.0  # mV
+    resting_potential = 0  # mV
     initial_n = 0.3
     initial_m = 0.05
     initial_h = 0.6
