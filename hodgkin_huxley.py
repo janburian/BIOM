@@ -10,10 +10,9 @@ g_Na = 120  # sodium conductance (mS/cm^2)
 g_K = 36  # potassium conductance (mS/cm^2)
 g_L = 0.3  # leak conductance (mS/cm^2)
 
-E_Na = 54  # sodium reversal potential (mV)
-E_K = -87  # potassium reversal potential (mV)
-E_L = -76  # leak reversal potential (mV)
-
+E_Na = 55  # sodium reversal potential (mV)
+E_K = -72  # potassium reversal potential (mV)
+E_L = -49.387  # leak reversal potential (mV)
 
 # Function representing the Hodgkin-Huxley model
 def hodgkin_huxley(y, t):
@@ -40,8 +39,8 @@ def hodgkin_huxley(y, t):
 # External current injection functions
 # Square wave
 def I_ext_square_wave(t):
-    if np.logical_and(0 < t, t < 10):
-        return 15
+    if np.logical_and(2 < t, t < 10):
+        return 20
     if np.logical_and(35 < t, t < 40):
         return 4
     if np.logical_and(58 < t, t < 63):
@@ -59,7 +58,7 @@ def I_ext_square_wave(t):
 
 # Alpha and beta functions for n, m and h gates
 def alpha_n(V):
-    return 0.01 * (V + 55.0) / (1.0 - np.exp(-(V + 35.0) / 10.0))
+    return 0.01 * (V + 55.0) / (1.0 - np.exp(-(V + 55.0) / 10.0))
 
 def beta_n(V):
     return 0.125 * np.exp(-(V + 65.0) / 80.0)
