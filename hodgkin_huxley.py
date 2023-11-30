@@ -10,9 +10,9 @@ g_Na = 120  # sodium conductance (mS/cm^2)
 g_K = 36  # potassium conductance (mS/cm^2)
 g_L = 0.3  # leak conductance (mS/cm^2)
 
-E_Na = 60  # sodium reversal potential (mV)
-E_K = -96  # potassium reversal potential (mV)
-E_L = -84  # leak reversal potential (mV)
+E_Na = 54  # sodium reversal potential (mV)
+E_K = -87  # potassium reversal potential (mV)
+E_L = -76  # leak reversal potential (mV)
 
 
 # Function representing the Hodgkin-Huxley model
@@ -28,7 +28,7 @@ def hodgkin_huxley(y, t):
     I_ion = I_Na + I_K + I_L
 
     # Differential equations
-    dV_dt = (I_ext(t) - I_ion) / C_m
+    dV_dt = (I_ext_square_wave(t) - I_ion) / C_m
 
     dn_dt = alpha_n(V_m) * (1 - n) - beta_n(V_m) * n
     dm_dt = alpha_m(V_m) * (1 - m) - beta_m(V_m) * m
@@ -37,24 +37,38 @@ def hodgkin_huxley(y, t):
     return [dV_dt, dn_dt, dm_dt, dh_dt]
 
 
-# External current injection function
-def I_ext(t):
-    # You can modify this function to simulate different current injections
-    return 30.0 if (2 < t < 6 or 50 < t < 60) else 0.0
+# External current injection functions
+# Square wave
+def I_ext_square_wave(t):
+    if np.logical_and(0 < t, t < 10):
+        return 15
+    if np.logical_and(35 < t, t < 40):
+        return 4
+    if np.logical_and(58 < t, t < 63):
+        return 15
+    if np.logical_and(78 < t, t < 90):
+        return 15
+
+    else:
+        return 0
+
+# Sinusoidal current injection
+# def I_ext_sine_wave(t):
+#     return 5 * np.sin(2 * np.pi * 0.1 * t)  # Inject a sinusoidal current with frequency 0.1 Hz and amplitude 5 uA/cm^2
 
 
-# Alpha and beta functions for m, n and h gates
+# Alpha and beta functions for n, m and h gates
+def alpha_n(V):
+    return 0.01 * (V + 55.0) / (1.0 - np.exp(-(V + 35.0) / 10.0))
+
+def beta_n(V):
+    return 0.125 * np.exp(-(V + 65.0) / 80.0)
+
 def alpha_m(V):
     return 0.1 * (V + 40.0) / (1.0 - np.exp(-(V + 40.0) / 10.0))
 
 def beta_m(V):
     return 4.0 * np.exp(-(V + 65.0) / 18.0)
-
-def alpha_n(V):
-    return 0.01 * (V + 55.0) / (1.0 - np.exp(-(V + 55.0) / 10.0))
-
-def beta_n(V):
-    return 0.125 * np.exp(-(V + 65.0) / 80.0)
 
 def alpha_h(V):
     return 0.07 * np.exp(-(V + 65.0) / 20.0)
@@ -63,9 +77,28 @@ def beta_h(V):
     return 1.0 / (1.0 + np.exp(-(V + 35.0) / 10.0))
 
 
+# def alpha_n(V):
+#     return 0.01 * (V + 10.0) / (-1.0 - np.exp(V + 10.0) / 10.0)
+#
+# def beta_n(V):
+#     return 0.125 * np.exp(V / 80.0)
+#
+# def alpha_m(V):
+#     return 0.1 * (V + 25.0) / (-1.0 - np.exp(V + 25.0) / 10.0)
+#
+# def beta_m(V):
+#     return 4.0 * np.exp(V / 18.0)
+#
+# def alpha_h(V):
+#     return 0.07 * np.exp(V / 20.0)
+#
+# def beta_h(V):
+#     return 1.0 / (1.0 + np.exp(V + 30.0) / 10.0)
+
+
 if __name__ == "__main__":
     # Determine the initial conditions
-    resting_potential = -85.0  # mV
+    resting_potential = -65.0  # mV
     initial_n = 0.3
     initial_m = 0.05
     initial_h = 0.6
@@ -80,22 +113,30 @@ if __name__ == "__main__":
 
     # Plot the results
     time_inj = np.arange(0, 100, 0.01)
-    injection_values = [I_ext(t) for t in time_inj]
+    injection_values = [I_ext_square_wave(t) for t in time_inj]
 
-    plt.figure(figsize=(10, 6))
+    # Plotting both figures in a single subplot
+    plt.figure(figsize=(10, 12))
 
+    # Subplot 1: Injected current
     plt.subplot(2, 1, 1)
-    plt.plot(time_inj, injection_values, label='Injected current')
+    plt.plot(time_inj, injection_values, label='Injected current', color='blue')
     plt.title('External Current Injection')
     plt.xlabel('Time [ms]')
     plt.ylabel('Current [uA/cm^2]')
     plt.legend()
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(time, solution[:, 0], label='Voltage')
+    # Subplot 2: Membrane Potential
+    plt.subplot(2, 1, 2)
+    plt.plot(time, solution[:, 0], label='Voltage', color='orange')
     plt.axhline(y=0, color='k', linestyle='-')
     plt.title('Hodgkin-Huxley Model')
     plt.xlabel('Time [ms]')
     plt.ylabel('Membrane Potential [mV]')
     plt.legend()
+
+    # Adjust layout to prevent clipping of titles and labels
+    plt.tight_layout()
+
+    # Show the plot
     plt.show()
