@@ -39,10 +39,10 @@ def hodgkin_huxley(y, t):
 # External current injection functions
 # Square wave
 def I_ext_square_wave(t):
-    if np.logical_and(2 < t, t < 2.9):
+    if np.logical_and(5 < t, t < 5.9):
         return 100
-    if np.logical_and(58 < t, t < 58.9):
-        return 100
+    # if np.logical_and(58 < t, t < 58.9):
+    #     return 100
     # if np.logical_and(58 < t, t < 63):
     #     return 15
     # if np.logical_and(78 < t, t < 90):
