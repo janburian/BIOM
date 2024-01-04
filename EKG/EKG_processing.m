@@ -83,7 +83,7 @@ ylabel('U [\muV]')
 
 %% Filter design
 fs = 1000; % sampling frequency
-f_cutoff = 25; 
+f_cutoff = 35; 
 
 % Lowpass filter
 [b, a] = butter(2, f_cutoff/(fs/2), 'low');
