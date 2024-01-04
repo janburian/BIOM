@@ -39,25 +39,102 @@ figure;
 
 subplot(6, 1, 1);
 plot(x, MDC_ECG_LEAD_I_num_vec);
+set(gca,'ytick',[])
 title('I');
+xlabel('t [s]')
+ylabel('U [\muV]')
 
 subplot(6, 1, 2);
 plot(x, MDC_ECG_LEAD_II_num_vec);
+set(gca,'ytick',[])
 title('II');
+xlabel('t [s]')
+ylabel('U [\muV]')
 
 subplot(6, 1, 3);
 plot(x, MDC_ECG_LEAD_III_num_vec);
+set(gca,'ytick',[])
 title('III');
+xlabel('t [s]')
+ylabel('U [\muV]')
 
 subplot(6, 1, 4);
 plot(x, MDC_ECG_LEAD_AVR_num_vec);
+set(gca,'ytick',[])
 title('aVR');
+xlabel('t [s]')
+ylabel('U [\muV]')
 
 subplot(6, 1, 5);
 plot(x, MDC_ECG_LEAD_AVL_num_vec);
+set(gca,'ytick',[])
 title('aVL');
+xlabel('t [s]')
+ylabel('U [\muV]')
 
 subplot(6, 1, 6);
 plot(x, MDC_ECG_LEAD_AVF_num_vec);
+set(gca,'ytick',[])
 title('aVF');
+xlabel('t [s]')
+ylabel('U [\muV]')
 
+%sgtitle('EKG') 
+
+%% Filter design
+fs = 1000; % sampling frequency
+f_cutoff = 25; 
+
+% Lowpass filter
+[b, a] = butter(2, f_cutoff/(fs/2), 'low');
+
+freqz(b, a, 1024, fs);
+
+% Filter application
+filtered_signal = filtfilt(b, a, MDC_ECG_LEAD_II_num_vec);
+
+% Visualisation of the original and filtered signal
+figure;
+subplot(2,1,1);
+plot(MDC_ECG_LEAD_II_num_vec); 
+title('Original EKG signal');
+subplot(2,1,2); 
+plot(filtered_signal); 
+title('Filtered EKG signal');
+
+%% 1 period
+figure
+plot(x, filtered_signal);
+xlabel('t [s]')
+ylabel('U [\muV]')
+yline(-490)
+xlim([3.8 4.8]-3.8)
+title('1 period');
+
+%%
+% Urèení adaptivních prahù
+mean_threshold = mean(filtered_sign);
+std_threshold = std(ekg_data);
+
+% Aplikace prahù na detekci vrcholù P, QRS, T
+threshold_P = mean_threshold * 0.6;
+threshold_QRS = mean_threshold * 1.2;
+threshold_T = mean_threshold * 0.8;
+
+% Detekce vrcholù P, QRS, T
+[pks_P, locs_P] = findpeaks(ekg_data, 'MinPeakHeight', threshold_P);
+[pks_QRS, locs_QRS] = findpeaks(-ekg_data, 'MinPeakHeight', threshold_QRS);
+[pks_T, locs_T] = findpeaks(ekg_data, 'MinPeakHeight', threshold_T);
+
+% Zobrazení výsledkù
+figure;
+plot(ekg_data);
+hold on;
+plot(locs_P, pks_P, 'rv', 'MarkerFaceColor', 'r');
+plot(locs_QRS, -pks_QRS, 'bx', 'MarkerFaceColor', 'b');
+plot(locs_T, pks_T, 'g^', 'MarkerFaceColor', 'g');
+title('Detekce vrcholù P, QRS, T');
+xlabel('Èas');
+ylabel('Amplituda');
+legend('EKG signál', 'Vrcholy P', 'Vrcholy QRS', 'Vrcholy T');
+hold off;

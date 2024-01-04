@@ -39,56 +39,61 @@ figure;
 
 subplot(6, 1, 1);
 plot(x, MDC_ECG_LEAD_I_num_vec);
+set(gca,'ytick',[])
 title('I');
 xlabel('t [s]')
 ylabel('U [\muV]')
 
 subplot(6, 1, 2);
 plot(x, MDC_ECG_LEAD_II_num_vec);
+set(gca,'ytick',[])
 title('II');
 xlabel('t [s]')
 ylabel('U [\muV]')
 
 subplot(6, 1, 3);
 plot(x, MDC_ECG_LEAD_III_num_vec);
+set(gca,'ytick',[])
 title('III');
 xlabel('t [s]')
 ylabel('U [\muV]')
 
 subplot(6, 1, 4);
 plot(x, MDC_ECG_LEAD_AVR_num_vec);
+set(gca,'ytick',[])
 title('aVR');
 xlabel('t [s]')
 ylabel('U [\muV]')
 
 subplot(6, 1, 5);
 plot(x, MDC_ECG_LEAD_AVL_num_vec);
+set(gca,'ytick',[])
 title('aVL');
 xlabel('t [s]')
 ylabel('U [\muV]')
 
 subplot(6, 1, 6);
 plot(x, MDC_ECG_LEAD_AVF_num_vec);
+set(gca,'ytick',[])
 title('aVF');
 xlabel('t [s]')
 ylabel('U [\muV]')
 
-sgtitle('EKG') 
+%sgtitle('EKG') 
 
 %% Filter design
-fs = 1000;
-f_cutoff = 50;
+fs = 1000; % sampling frequency
+f_cutoff = 25; 
 
 % Lowpass filter
 [b, a] = butter(2, f_cutoff/(fs/2), 'low');
 
 freqz(b, a, 1024, fs);
 
-%% 
-% Aplikace filtru
+% Filter application
 filtered_signal = filtfilt(b, a, MDC_ECG_LEAD_II_num_vec);
 
-% Zobrazeni puvodniho a vyfiltrovaneho signalu
+% Visualisation of the original and filtered signal
 figure;
 subplot(2,1,1);
 plot(MDC_ECG_LEAD_II_num_vec); 
@@ -97,36 +102,52 @@ subplot(2,1,2);
 plot(filtered_signal); 
 title('Filtered EKG signal');
 
-%% P, QRS, T 
-% Urceni adaptivnich prahu
+%% 1 period
+figure
+plot(x, filtered_signal);
+xlabel('t [s]')
+ylabel('U [\muV]')
+yline(-490)
+xlim([3.8 4.8]-3.8)
+title('1 period');
+
+%%
+% Urèení adaptivních prahù
 mean_threshold = mean(filtered_signal);
 std_threshold = std(filtered_signal);
 
-% Aplikace prahu na detekci vrcholu P, QRS, T
-threshold_P = mean_threshold * 0.6;
-threshold_QRS = mean_threshold * 1.2;
+% Aplikace prahù na detekci vrcholù P, QRS, T
+threshold_P = mean_threshold * 30;
+threshold_Q = mean_threshold * 1.2;
+threshold_R = mean_threshold * 5;
+threshold_S = mean_threshold * 0.04;
 threshold_T = mean_threshold * 0.8;
 
-% Detekce vrcholu P, QRS, T
-[pks_P, locs_P] = findpeaks(filtered_signal, 'MinPeakHeight', threshold_P);
-[pks_QRS, locs_QRS] = findpeaks(-filtered_signal, 'MinPeakHeight', threshold_QRS);
-[pks_T, locs_T] = findpeaks(filtered_signal, 'MinPeakHeight', threshold_T);
+min_distance_P = 700;
+min_distance_Q = 0.5;
+min_distance_R = 0.5;
+min_distance_S = 0.5;
+min_distance_T = 0.5;
 
-% Zobrazeni výsledku
+% Detekce vrcholù P, Q, R, S, T
+[pks_P, locs_P] = findpeaks(filtered_signal, 'MinPeakHeight', threshold_P, 'MinPeakDistance', min_distance_P);
+[pks_Q, locs_Q] = findpeaks(-filtered_signal, 'MinPeakHeight', threshold_Q, 'MinPeakDistance', min_distance_Q);
+[pks_R, locs_R] = findpeaks(filtered_signal, 'MinPeakHeight', threshold_R, 'MinPeakDistance', min_distance_R);
+[pks_S, locs_S] = findpeaks(-filtered_signal, 'MinPeakHeight', threshold_S, 'MinPeakDistance', min_distance_S);
+[pks_T, locs_T] = findpeaks(filtered_signal, 'MinPeakHeight', threshold_T, 'MinPeakDistance', min_distance_T);
+
+% Zobrazení výsledkù
 figure;
 plot(filtered_signal);
 hold on;
-plot(locs_P, pks_P, 'rv', 'MarkerFaceColor', 'r');
-plot(locs_QRS, -pks_QRS, 'bx', 'MarkerFaceColor', 'b');
-plot(locs_T, pks_T, 'g^', 'MarkerFaceColor', 'g');
-title('Detekce vrcholù P, QRS, T');
+plot(locs_P, pks_P, 'rv', 'MarkerFaceColor', 'r', 'DisplayName', 'Vrcholy P');
+plot(locs_Q, -pks_Q, 'bv', 'MarkerFaceColor', 'b', 'DisplayName', 'Vrcholy Q');
+plot(locs_R, pks_R, 'gx', 'MarkerFaceColor', 'g', 'DisplayName', 'Vrcholy R');
+plot(locs_S, -pks_S, 'ms', 'MarkerFaceColor', 'm', 'DisplayName', 'Vrcholy S');
+plot(locs_T, pks_T, 'co', 'MarkerFaceColor', 'c', 'DisplayName', 'Vrcholy T');
+title('Detekce vrcholù P, Q, R, S, T');
 xlabel('Èas');
 ylabel('Amplituda');
-legend('EKG signál', 'Vrcholy P', 'Vrcholy QRS', 'Vrcholy T');
+legend('EKG signál', 'Location', 'Best');
 hold off;
-
-% % Vypocet delek intervalu
-% PQ_interval = locs_QRS(1) - locs_P;
-% QRS_interval = locs_QRS(2) - locs_QRS(1);
-% QT_interval = locs_T(1) - locs_QRS(2);
 
