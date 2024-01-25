@@ -83,10 +83,12 @@ ylabel('U [\muV]')
 
 %% Filter design
 fs = 1000; % sampling frequency
-f_cutoff = 35; 
+f_cutoff = 90; % cutoff frequency
+n = 2; % filter order
+Wn = f_cutoff/(fs/2); % normalized cutoff frequency
 
 % Lowpass filter
-[b, a] = butter(2, f_cutoff/(fs/2), 'low');
+[b, a] = butter(2, Wn, 'low');
 
 freqz(b, a, 1024, fs);
 
@@ -97,57 +99,128 @@ filtered_signal = filtfilt(b, a, MDC_ECG_LEAD_II_num_vec);
 figure;
 subplot(2,1,1);
 plot(MDC_ECG_LEAD_II_num_vec); 
-title('Original EKG signal');
+title('Original ECG signal');
 subplot(2,1,2); 
 plot(filtered_signal); 
-title('Filtered EKG signal');
+title('Filtered ECG signal');
 
-%% 1 period
-figure
-plot(x, filtered_signal);
+%% 2 periods
+figure;
+subplot(2,1,1);
+plot(x, MDC_ECG_LEAD_II_num_vec); 
 xlabel('t [s]')
 ylabel('U [\muV]')
-yline(-490)
-xlim([3.8 4.8]-3.8)
-title('1 period');
+xlim([3.8 5.5]-3.8)
+title('Original ECG signal');
+subplot(2,1,2); 
+plot(x, filtered_signal); 
+xlabel('t [s]')
+ylabel('U [\muV]')
+xlim([3.8 5.5]-3.8)
+title('Filtered ECG signal');
+sgtitle('Comparison of the original and filtered signals')
 
 %%
-% Urèení adaptivních prahù
-mean_threshold = mean(filtered_signal);
-std_threshold = std(filtered_signal);
-
-% Aplikace prahù na detekci vrcholù P, QRS, T
-threshold_P = mean_threshold * 30;
-threshold_Q = mean_threshold * 1.2;
-threshold_R = mean_threshold * 5;
-threshold_S = mean_threshold * 0.04;
-threshold_T = mean_threshold * 0.8;
-
-min_distance_P = 700;
-min_distance_Q = 0.5;
-min_distance_R = 0.5;
-min_distance_S = 0.5;
-min_distance_T = 0.5;
-
-% Detekce vrcholù P, Q, R, S, T
-[pks_P, locs_P] = findpeaks(filtered_signal, 'MinPeakHeight', threshold_P, 'MinPeakDistance', min_distance_P);
-[pks_Q, locs_Q] = findpeaks(-filtered_signal, 'MinPeakHeight', threshold_Q, 'MinPeakDistance', min_distance_Q);
-[pks_R, locs_R] = findpeaks(filtered_signal, 'MinPeakHeight', threshold_R, 'MinPeakDistance', min_distance_R);
-[pks_S, locs_S] = findpeaks(-filtered_signal, 'MinPeakHeight', threshold_S, 'MinPeakDistance', min_distance_S);
-[pks_T, locs_T] = findpeaks(filtered_signal, 'MinPeakHeight', threshold_T, 'MinPeakDistance', min_distance_T);
-
-% Zobrazení výsledkù
 figure;
-plot(filtered_signal);
+subplot(2,1,1);
+spectrogram(MDC_ECG_LEAD_II_num_vec,'yaxis', fs) 
+ylabel('Normalized frequency')
+title('Original ECG signal');
+subplot(2,1,2); 
+spectrogram(filtered_signal,'yaxis', fs)
+ylabel('Normalized frequency')
+title('Filtered ECG signal');
+sgtitle('Comparison of the spectrograms')
+
+%% 1 period
+signal_1_period = filtered_signal(1, 3980:4700); 
+x = linspace(0, length(signal_1_period) * 0.001, length(signal_1_period));
+
+figure;
+hold on
+plot(x, signal_1_period); 
+xlabel('t [s]')
+ylabel('U [\muV]')
+title('Filtered ECG signal (1 period)');
+
+%% Segments
+% P_vec
+% PQ_vec
+% QRS_vec
+% ST_vec
+% T_vec
+
+% Plotting the data
+figure
+hold on
+plot(x(1:165), signal_1_period(1:165), 'Color', '#0072BD', 'DisplayName', 'P')
+plot(x(165:215), signal_1_period(165:215), 'Color', '#D95319', 'DisplayName', 'PQ')
+plot(x(215:230), signal_1_period(215:230), 'Color', '#EDB120', 'DisplayName', 'Q')
+plot(x(230:248), signal_1_period(230:248), 'Color', '#7E2F8E', 'DisplayName', 'QR')
+scatter(x(248), signal_1_period(248), 'filled', 'DisplayName', 'R')
+plot(x(248:282), signal_1_period(248:282), 'Color', '#77AC30', 'DisplayName', 'S')
+plot(x(282:420), signal_1_period(282:420), 'Color', '#4DBEEE', 'DisplayName', 'ST')
+plot(x(420:end), signal_1_period(420:end), 'Color', '#A2142F', 'DisplayName', 'T')
+xlabel('t [s]')
+ylabel('U [\muV]')
+
+% Displaying the legend
+legend('show')
+title('ECG signal (PQRST)')
+
+%% FFT
+N = length(signal_1_period);  % Length of the signal
+Fs = 1000;  % Sampling frequency
+frequencies = Fs * (0:(N/2))/N;  % Frequency axis for positive frequencies
+
+% Perform FFT
+fft_result = fft(signal_1_period);
+
+% Take only the positive half (single-sided spectrum)
+single_sided_spectrum = 2/N * abs(fft_result(1:N/2 + 1));
+
+% Compute the power spectrum (square of magnitude)
+power_spectrum = single_sided_spectrum.^2;
+
+figure;
+subplot(2, 1, 1);
+plot(x, signal_1_period);
+title('ECG signal (1 period)');
+grid on;
+xlabel('t [s]');
+ylabel('U [\muV]');
+subplot(2, 1, 2);
+plot(frequencies, power_spectrum)
+xlim([0 60])
+xlabel('Frequency [Hz]')
+ylabel('Power')
+title('Power Spectrum of the Signal')
+sgtitle('ECG signal and power spectrum');
+
+%% Find R-peaks in the ECG signal
+[peaks, locs] = findpeaks(filtered_signal, 'MinPeakHeight', 0.6, 'MinPeakDistance', 300);
+t = linspace(0, 10, 10000);  % Time vector
+
+% Visualize the ECG signal and the detected R-peaks
+figure;
+plot(t, filtered_signal);
 hold on;
-plot(locs_P, pks_P, 'rv', 'MarkerFaceColor', 'r', 'DisplayName', 'Vrcholy P');
-plot(locs_Q, -pks_Q, 'bv', 'MarkerFaceColor', 'b', 'DisplayName', 'Vrcholy Q');
-plot(locs_R, pks_R, 'gx', 'MarkerFaceColor', 'g', 'DisplayName', 'Vrcholy R');
-plot(locs_S, -pks_S, 'ms', 'MarkerFaceColor', 'm', 'DisplayName', 'Vrcholy S');
-plot(locs_T, pks_T, 'co', 'MarkerFaceColor', 'c', 'DisplayName', 'Vrcholy T');
-title('Detekce vrcholù P, Q, R, S, T');
-xlabel('Èas');
-ylabel('Amplituda');
-legend('EKG signál', 'Location', 'Best');
-hold off;
+plot(t(locs), peaks, 'rx', 'MarkerSize', 10);
+title('ECG Signal with detected R-peaks');
+xlabel('t [s]');
+ylabel('U [\muV]');
+legend('ECG Signal', 'R-peaks');
+
+%% Counting BPM
+% Calculate Inter-Beat Intervals (IBIs) in seconds
+ibis = diff(t(locs));
+
+% Convert IBIs to Beats Per Minute (BPM)
+bpm = 60 ./ mean(ibis);
+
+% Display the BPM
+disp(['Heart rate (BPM): ', num2str(bpm)]);
+
+
+
 
