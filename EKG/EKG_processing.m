@@ -90,7 +90,8 @@ Wn = f_cutoff/(fs/2); % normalized cutoff frequency
 % Lowpass filter
 [b, a] = butter(2, Wn, 'low');
 
-freqz(b, a, 1024, fs);
+freqz(b, a, fs);
+title('Frequency response')
 
 % Filter application
 filtered_signal = filtfilt(b, a, MDC_ECG_LEAD_II_num_vec);
