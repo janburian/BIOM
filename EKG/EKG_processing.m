@@ -83,7 +83,7 @@ ylabel('U [\muV]')
 
 %% Filter design
 fs = 1000; % sampling frequency
-f_cutoff = 90; % cutoff frequency
+f_cutoff = 50; % cutoff frequency
 n = 2; % filter order
 Wn = f_cutoff/(fs/2); % normalized cutoff frequency
 
@@ -159,8 +159,8 @@ plot(x(215:230), signal_1_period(215:230), 'Color', '#EDB120', 'DisplayName', 'Q
 plot(x(230:248), signal_1_period(230:248), 'Color', '#7E2F8E', 'DisplayName', 'QR')
 scatter(x(248), signal_1_period(248), 'filled', 'DisplayName', 'R')
 plot(x(248:282), signal_1_period(248:282), 'Color', '#77AC30', 'DisplayName', 'S')
-plot(x(282:420), signal_1_period(282:420), 'Color', '#4DBEEE', 'DisplayName', 'ST')
-plot(x(420:end), signal_1_period(420:end), 'Color', '#A2142F', 'DisplayName', 'T')
+plot(x(282:330), signal_1_period(282:330), 'Color', '#4DBEEE', 'DisplayName', 'ST')
+plot(x(330:end), signal_1_period(330:end), 'Color', '#A2142F', 'DisplayName', 'T')
 xlabel('t [s]')
 ylabel('U [\muV]')
 
@@ -191,7 +191,7 @@ xlabel('t [s]');
 ylabel('U [\muV]');
 subplot(2, 1, 2);
 plot(frequencies, power_spectrum)
-xlim([0 60])
+xlim([0 30])
 xlabel('Frequency [Hz]')
 ylabel('Power')
 title('Power Spectrum of the Signal')
